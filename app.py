@@ -1,4 +1,4 @@
-%%writefile app.py
+
 import streamlit as st
 
 # 반드시 첫 Streamlit 호출
@@ -152,3 +152,4 @@ st.download_button(
     file_name="correlation_data.csv",
     mime="text/csv"
 )
+
