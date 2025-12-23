@@ -1,5 +1,6 @@
 
 import streamlit as st
+import networkx as nx
 
 # 반드시 첫 Streamlit 호출
 st.set_page_config(page_title="CSV 상관관계 시각화", layout="wide")
@@ -152,4 +153,44 @@ st.download_button(
     file_name="correlation_data.csv",
     mime="text/csv"
 )
+
+st.subheader("🔗 상관관계 네트워크 그래프")
+
+edges = []
+for i in corr.columns:
+    for j in corr.columns:
+        if i != j and abs(corr.loc[i, j]) >= min_corr:
+            edges.append((i, j, corr.loc[i, j]))
+
+G = nx.Graph()
+for i, j, w in edges:
+    G.add_edge(i, j, weight=w)
+
+pos = nx.spring_layout(G, seed=42)
+
+edge_x, edge_y = [], []
+for e in G.edges():
+    x0, y0 = pos[e[0]]
+    x1, y1 = pos[e[1]]
+    edge_x += [x0, x1, None]
+    edge_y += [y0, y1, None]
+
+node_x, node_y = zip(*[pos[n] for n in G.nodes()])
+
+fig_net = px.scatter(
+    x=node_x,
+    y=node_y,
+    text=list(G.nodes()),
+    title="Correlation Network"
+)
+
+fig_net.add_scatter(
+    x=edge_x,
+    y=edge_y,
+    mode="lines",
+    line=dict(width=1),
+    showlegend=False
+)
+
+st.plotly_chart(fig_net, use_container_width=True)
 
