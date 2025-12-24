@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>데이터 상관관계 분석 서비스</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 30px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+        
+        .card-title {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 16px;
+            padding: 50px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+        
+        .upload-area:hover {
+            background: #eef0ff;
+            border-color: #5a67d8;
+        }
+        
+        .upload-area.dragover {
+            background: #e0e4ff;
+            border-color: #4c51bf;
+        }
+        
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+        
+        .upload-text {
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        
+        .upload-hint {
+            font-size: 0.9rem;
+            color: #888;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-info {
+            display: none;
+            background: #e8f5e9;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .file-info.show {
+            display: flex;
+        }
+        
+        .file-icon {
+            font-size: 2rem;
+        }
+        
+        .file-details {
+            flex: 1;
+        }
+        
+        .file-name {
+            font-weight: 600;
+            color: #2e7d32;
+        }
+        
+        .file-meta {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .remove-file {
+            background: #ef5350;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .remove-file:hover {
+            background: #d32f2f;
+        }
+        
+        .column-section {
+            display: none;
+        }
+        
+        .column-section.show {
+            display: block;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 18px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .checkbox-item:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+        
+        .checkbox-item.selected {
+            background: #667eea;
+            color: white;
+            border-color: #5a67d8;
+        }
+        
+        .checkbox-item input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .checkbox-item label {
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+            box-shadow: 0 5px 20px rgba(108, 117, 125, 0.4);
+        }
+        
+        .chart-section {
+            display: none;
+        }
+        
+        .chart-section.show {
+            display: block;
+        }
+        
+        .heatmap-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        
+        .heatmap-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        #heatmapCanvas {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .color-scale {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+        }
+        
+        .color-scale-bar {
+            width: 30px;
+            height: 300px;
+            border-radius: 4px;
+            background: linear-gradient(to bottom, #1a9850, #91cf60, #fee08b, #fc8d59, #d73027);
+        }
+        
+        .color-scale-labels {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 300px;
+            margin-left: 8px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            justify-content: center;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+        }
+        
+        .interpretation {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+        
+        .interpretation h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .interpretation-item {
+            padding: 15px;
+            margin: 12px 0;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            line-height: 1.6;
+        }
+        
+        .interpretation-item.insight {
+            border-left-color: #28a745;
+        }
+        
+        .correlation-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .strong-positive { background: #d4edda; color: #155724; }
+        .moderate-positive { background: #fff3cd; color: #856404; }
+        .weak { background: #e2e3e5; color: #383d41; }
+        .moderate-negative { background: #f8d7da; color: #721c24; }
+        .strong-negative { background: #f5c6cb; color: #721c24; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .warning.show {
+            display: block;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            color: #0c5460;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .preview-table th,
+        .preview-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .preview-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .preview-table tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .preview-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .tooltip {
+            position: fixed;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+            max-width: 250px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 데이터 상관관계 분석 서비스</h1>
+        
+        <div class="card">
+            <div class="card-title">1. 데이터 파일 업로드</div>
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">CSV 파일을 드래그하거나 클릭하여 업로드</div>
+                <div class="upload-hint">지원 형식: .csv (UTF-8 권장)</div>
+                <input type="file" class="file-input" id="fileInput" accept=".csv">
+            </div>
+            
+            <div class="file-info" id="fileInfo">
+                <div class="file-icon">📄</div>
+                <div class="file-details">
+                    <div class="file-name" id="fileName"></div>
+                    <div class="file-meta" id="fileMeta"></div>
+                </div>
+                <button class="remove-file" onclick="removeFile()">삭제</button>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div>파일을 분석하는 중입니다...</div>
+            </div>
+        </div>
+        
+        <div class="card column-section" id="columnSection">
+            <div class="card-title">2. 분석할 컬럼 선택</div>
+            <div class="info-box">
+                💡 수치형 데이터 컬럼만 표시됩니다. 상관관계를 분석할 컬럼을 2개 이상 선택해주세요.
+            </div>
+            <div class="checkbox-group" id="columnCheckboxes"></div>
+            <div class="btn-group">
+                <button class="btn" onclick="analyzeCorrelation()">🔍 상관관계 분석</button>
+                <button class="btn btn-secondary" onclick="selectAll()">전체 선택</button>
+                <button class="btn btn-secondary" onclick="deselectAll()">전체 해제</button>
+            </div>
+            <div class="warning" id="warning">⚠️ 최소 2개 이상의 컬럼을 선택해주세요.</div>
+            
+            <div style="margin-top: 25px;">
+                <h4 style="margin-bottom: 10px; color: #555;">📋 데이터 미리보기 (상위 5행)</h4>
+                <div class="preview-container">
+                    <table class="preview-table" id="previewTable"></table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card chart-section" id="chartSection">
+            <div class="card-title">3. 상관관계 히트맵</div>
+            <div class="heatmap-container">
+                <div class="heatmap-wrapper">
+                    <canvas id="heatmapCanvas"></canvas>
+                </div>
+                <div class="color-scale">
+                    <div style="display: flex;">
+                        <div class="color-scale-bar"></div>
+                        <div class="color-scale-labels">
+                            <span>+1.0</span>
+                            <span>+0.5</span>
+                            <span>0</span>
+                            <span>-0.5</span>
+                            <span>-1.0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #d73027;"></div>
+                    <span>강한 음의 상관 (-1.0)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #fee08b;"></div>
+                    <span>상관 없음 (0)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #1a9850;"></div>
+                    <span>강한 양의 상관 (+1.0)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card chart-section" id="interpretationSection">
+            <div class="card-title">4. 분석 결과 해석</div>
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-value" id="maxCorr">-</div>
+                    <div class="stat-label">최대 상관계수</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="minCorr">-</div>
+                    <div class="stat-label">최소 상관계수</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgCorr">-</div>
+                    <div class="stat-label">평균 |상관계수|</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="pairCount">-</div>
+                    <div class="stat-label">분석 쌍 수</div>
+                </div>
+            </div>
+            <div class="interpretation" id="interpretation">
+                <div id="interpretationContent"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        let parsedData = [];
+        let numericColumns = [];
+        let allColumns = [];
+        let currentMatrix = [];
+        let currentLabels = [];
+
+        // CSV 파서 (PapaParse 대체)
+        function parseCSV(text) {
+            const lines = text.split(/\r\n|\n/);
+            const result = { data: [], meta: { fields: [] } };
+            
+            if (lines.length === 0) return result;
+            
+            // 헤더 파싱
+            const headers = parseCSVLine(lines[0]);
+            result.meta.fields = headers;
+            
+            // 데이터 파싱
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim() === '') continue;
+                const values = parseCSVLine(lines[i]);
+                const row = {};
+                headers.forEach((header, index) => {
+                    let val = values[index] || '';
+                    // 숫자 변환 시도
+                    const numVal = parseFloat(val);
+                    row[header] = !isNaN(numVal) && val.trim() !== '' ? numVal : val;
+                });
+                result.data.push(row);
+            }
+            
+            return result;
+        }
+        
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            
+            return result;
+        }
+
+        // 파일 업로드 이벤트
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) processFile(file);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) processFile(file);
+        });
+
+        function processFile(file) {
+            if (!file.name.endsWith('.csv')) {
+                alert('CSV 파일만 업로드 가능합니다.');
+                return;
+            }
+
+            document.getElementById('loading').classList.add('show');
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const text = e.target.result;
+                    const results = parseCSV(text);
+                    
+                    document.getElementById('loading').classList.remove('show');
+                    
+                    parsedData = results.data;
+                    allColumns = results.meta.fields || [];
+                    
+                    numericColumns = findNumericColumns(parsedData, allColumns);
+                    
+                    showFileInfo(file, parsedData.length, allColumns.length, numericColumns.length);
+                    createColumnCheckboxes(numericColumns);
+                    showDataPreview(parsedData, allColumns);
+                    
+                    document.getElementById('columnSection').classList.add('show');
+                    document.getElementById('chartSection').classList.remove('show');
+                    document.getElementById('interpretationSection').classList.remove('show');
+                } catch (error) {
+                    document.getElementById('loading').classList.remove('show');
+                    alert('파일 파싱 오류: ' + error.message);
+                }
+            };
+            reader.onerror = function() {
+                document.getElementById('loading').classList.remove('show');
+                alert('파일 읽기 오류가 발생했습니다.');
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function findNumericColumns(data, columns) {
+            const numeric = [];
+            columns.forEach(col => {
+                let isNumeric = true;
+                let hasValue = false;
+                
+                for (let i = 0; i < Math.min(data.length, 100); i++) {
+                    const val = data[i][col];
+                    if (val !== null && val !== undefined && val !== '') {
+                        hasValue = true;
+                        if (typeof val !== 'number' || isNaN(val)) {
+                            isNumeric = false;
+                            break;
+                        }
+                    }
+                }
+                
+                if (isNumeric && hasValue) {
+                    numeric.push(col);
+                }
+            });
+            return numeric;
+        }
+
+        function showFileInfo(file, rows, totalCols, numCols) {
+            document.getElementById('fileInfo').classList.add('show');
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileMeta').textContent = 
+                `${rows.toLocaleString()}행 × ${totalCols}열 (수치형 컬럼: ${numCols}개)`;
+            uploadArea.style.display = 'none';
+        }
+
+        function removeFile() {
+            parsedData = [];
+            numericColumns = [];
+            allColumns = [];
+            fileInput.value = '';
+            
+            document.getElementById('fileInfo').classList.remove('show');
+            uploadArea.style.display = 'block';
+            document.getElementById('columnSection').classList.remove('show');
+            document.getElementById('chartSection').classList.remove('show');
+            document.getElementById('interpretationSection').classList.remove('show');
+        }
+
+        function createColumnCheckboxes(columns) {
+            const container = document.getElementById('columnCheckboxes');
+            container.innerHTML = '';
+            
+            columns.forEach((col, index) => {
+                const div = document.createElement('div');
+                div.className = 'checkbox-item';
+                div.onclick = function() { toggleCheckbox(this); };
+                div.innerHTML = `
+                    <input type="checkbox" id="col_${index}" value="${col}">
+                    <label for="col_${index}">${col}</label>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function showDataPreview(data, columns) {
+            const table = document.getElementById('previewTable');
+            let html = '<thead><tr>';
+            columns.forEach(col => {
+                html += `<th>${col}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            
+            const previewRows = data.slice(0, 5);
+            previewRows.forEach(row => {
+                html += '<tr>';
+                columns.forEach(col => {
+                    const val = row[col];
+                    html += `<td>${val !== null && val !== undefined ? val : '-'}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody>';
+            table.innerHTML = html;
+        }
+
+        function toggleCheckbox(element) {
+            const checkbox = element.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            element.classList.toggle('selected', checkbox.checked);
+        }
+
+        function selectAll() {
+            document.querySelectorAll('#columnCheckboxes .checkbox-item').forEach(item => {
+                const checkbox = item.querySelector('input');
+                checkbox.checked = true;
+                item.classList.add('selected');
+            });
+        }
+
+        function deselectAll() {
+            document.querySelectorAll('#columnCheckboxes .checkbox-item').forEach(item => {
+                const checkbox = item.querySelector('input');
+                checkbox.checked = false;
+                item.classList.remove('selected');
+            });
+        }
+
+        function getSelectedColumns() {
+            const checkboxes = document.querySelectorAll('#columnCheckboxes input:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        function calculateCorrelation(x, y) {
+            const pairs = [];
+            for (let i = 0; i < x.length; i++) {
+                if (x[i] !== null && y[i] !== null && !isNaN(x[i]) && !isNaN(y[i])) {
+                    pairs.push([x[i], y[i]]);
+                }
+            }
+            
+            if (pairs.length < 2) return 0;
+            
+            const n = pairs.length;
+            const xVals = pairs.map(p => p[0]);
+            const yVals = pairs.map(p => p[1]);
+            
+            const sumX = xVals.reduce((a, b) => a + b, 0);
+            const sumY = yVals.reduce((a, b) => a + b, 0);
+            const sumXY = xVals.reduce((total, xi, i) => total + xi * yVals[i], 0);
+            const sumX2 = xVals.reduce((total, xi) => total + xi * xi, 0);
+            const sumY2 = yVals.reduce((total, yi) => total + yi * yi, 0);
+            
+            const numerator = n * sumXY - sumX * sumY;
+            const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+            
+            return denominator === 0 ? 0 : numerator / denominator;
+        }
+
+        function getCorrelationColor(r) {
+            // -1 ~ +1 사이의 값을 색상으로 변환
+            const colors = [
+                { pos: -1, r: 215, g: 48, b: 39 },    // 빨강
+                { pos: -0.5, r: 252, g: 141, b: 89 }, // 주황
+                { pos: 0, r: 254, g: 224, b: 139 },   // 노랑
+                { pos: 0.5, r: 145, g: 207, b: 96 },  // 연두
+                { pos: 1, r: 26, g: 152, b: 80 }      // 초록
+            ];
+            
+            let lower = colors[0];
+            let upper = colors[colors.length - 1];
+            
+            for (let i = 0; i < colors.length - 1; i++) {
+                if (r >= colors[i].pos && r <= colors[i + 1].pos) {
+                    lower = colors[i];
+                    upper = colors[i + 1];
+                    break;
+                }
+            }
+            
+            const range = upper.pos - lower.pos;
+            const factor = range === 0 ? 0 : (r - lower.pos) / range;
+            
+            const red = Math.round(lower.r + factor * (upper.r - lower.r));
+            const green = Math.round(lower.g + factor * (upper.g - lower.g));
+            const blue = Math.round(lower.b + factor * (upper.b - lower.b));
+            
+            return `rgb(${red}, ${green}, ${blue})`;
+        }
+
+        function getCorrelationStrength(r) {
+            const absR = Math.abs(r);
+            if (absR >= 0.7) return r > 0 ? { text: '강한 양의 상관', class: 'strong-positive' } : { text: '강한 음의 상관', class: 'strong-negative' };
+            if (absR >= 0.4) return r > 0 ? { text: '보통 양의 상관', class: 'moderate-positive' } : { text: '보통 음의 상관', class: 'moderate-negative' };
+            return { text: '약한 상관', class: 'weak' };
+        }
+
+        function analyzeCorrelation() {
+            const selectedCols = getSelectedColumns();
+            const warning = document.getElementById('warning');
+            
+            if (selectedCols.length < 2) {
+                warning.classList.add('show');
+                return;
+            }
+            warning.classList.remove('show');
+
+            const n = selectedCols.length;
+            const correlationMatrix = [];
+            const correlationPairs = [];
+
+            for (let i = 0; i < n; i++) {
+                correlationMatrix[i] = [];
+                for (let j = 0; j < n; j++) {
+                    const col1 = selectedCols[i];
+                    const col2 = selectedCols[j];
+                    const data1 = parsedData.map(d => d[col1]);
+                    const data2 = parsedData.map(d => d[col2]);
+                    const corr = calculateCorrelation(data1, data2);
+                    correlationMatrix[i][j] = corr;
+                    
+                    if (i < j) {
+                        correlationPairs.push({
+                            col1: col1,
+                            col2: col2,
+                            correlation: corr
+                        });
+                    }
+                }
+            }
+
+            currentMatrix = correlationMatrix;
+            currentLabels = selectedCols;
+            
+            drawHeatmap(correlationMatrix, selectedCols);
+            generateInterpretation(correlationPairs, selectedCols);
+            
+            document.getElementById('chartSection').classList.add('show');
+            document.getElementById('interpretationSection').classList.add('show');
+            
+            document.getElementById('chartSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function drawHeatmap(matrix, labels) {
+            const canvas = document.getElementById('heatmapCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            const n = labels.length;
+            const cellSize = Math.min(60, Math.max(40, 400 / n));
+            const labelWidth = 100;
+            const labelHeight = 80;
+            const padding = 10;
+            
+            canvas.width = labelWidth + n * cellSize + padding * 2;
+            canvas.height = labelHeight + n * cellSize + padding * 2;
+            
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 셀 그리기
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    const x = labelWidth + j * cellSize + padding;
+                    const y = labelHeight + i * cellSize + padding;
+                    const corr = matrix[i][j];
+                    
+                    ctx.fillStyle = getCorrelationColor(corr);
+                    ctx.fillRect(x, y, cellSize - 2, cellSize - 2);
+                    
+                    // 상관계수 텍스트
+                    ctx.fillStyle = Math.abs(corr) > 0.5 ? 'white' : '#333';
+                    ctx.font = `${Math.max(10, cellSize / 5)}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(corr.toFixed(2), x + cellSize / 2 - 1, y + cellSize / 2 - 1);
+                }
+            }
+            
+            // Y축 레이블
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            for (let i = 0; i < n; i++) {
+                const y = labelHeight + i * cellSize + cellSize / 2 + padding;
+                const label = labels[i].length > 12 ? labels[i].substring(0, 10) + '...' : labels[i];
+                ctx.fillText(label, labelWidth - 5 + padding, y);
+            }
+            
+            // X축 레이블
+            ctx.save();
+            ctx.textAlign = 'left';
+            for (let j = 0; j < n; j++) {
+                const x = labelWidth + j * cellSize + cellSize / 2 + padding;
+                const label = labels[j].length > 12 ? labels[j].substring(0, 10) + '...' : labels[j];
+                ctx.save();
+                ctx.translate(x, labelHeight - 5 + padding);
+                ctx.rotate(-Math.PI / 4);
+                ctx.fillText(label, 0, 0);
+                ctx.restore();
+            }
+            ctx.restore();
+            
+            // 툴팁 이벤트
+            canvas.onmousemove = function(e) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left - labelWidth - padding;
+                const y = e.clientY - rect.top - labelHeight - padding;
+                
+                const j = Math.floor(x / cellSize);
+                const i = Math.floor(y / cellSize);
+                
+                const tooltip = document.getElementById('tooltip');
+                
+                if (i >= 0 && i < n && j >= 0 && j < n) {
+                    const corr = matrix[i][j];
+                    const strength = getCorrelationStrength(corr);
+                    tooltip.innerHTML = `<strong>${labels[i]}</strong> ↔ <strong>${labels[j]}</strong><br>상관계수: ${corr.toFixed(3)}<br>${strength.text}`;
+                    tooltip.style.left = (e.clientX + 15) + 'px';
+                    tooltip.style.top = (e.clientY + 15) + 'px';
+                    tooltip.style.display = 'block';
+                } else {
+                    tooltip.style.display = 'none';
+                }
+            };
+            
+            canvas.onmouseleave = function() {
+                document.getElementById('tooltip').style.display = 'none';
+            };
+        }
+
+        function generateInterpretation(pairs, columns) {
+            if (pairs.length === 0) return;
+            
+            const correlations = pairs.map(p => p.correlation);
+            const absCorrelations = correlations.map(c => Math.abs(c));
+            const maxCorr = Math.max(...correlations);
+            const minCorr = Math.min(...correlations);
+            const avgAbsCorr = absCorrelations.reduce((a, b) => a + b, 0) / absCorrelations.length;
+
+            document.getElementById('maxCorr').textContent = maxCorr.toFixed(3);
+            document.getElementById('minCorr').textContent = minCorr.toFixed(3);
+            document.getElementById('avgCorr').textContent = avgAbsCorr.toFixed(3);
+            document.getElementById('pairCount').textContent = pairs.length;
+
+            const sortedPairs = [...pairs].sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation));
+
+            let html = '<h3>📋 상관관계 분석 결과</h3>';
+            
+            html += '<div class="interpretation-item">';
+            html += `<strong>📌 분석 개요</strong><br>`;
+            html += `선택된 <strong>${columns.length}개</strong> 변수 간의 상관관계를 분석했습니다. `;
+            html += `총 <strong>${pairs.length}개</strong>의 변수 쌍이 분석되었습니다.<br>`;
+            
+            const strongCorr = pairs.filter(p => Math.abs(p.correlation) >= 0.7).length;
+            const moderateCorr = pairs.filter(p => Math.abs(p.correlation) >= 0.4 && Math.abs(p.correlation) < 0.7).length;
+            
+            html += `• 강한 상관관계 (|r| ≥ 0.7): <strong>${strongCorr}개</strong><br>`;
+            html += `• 보통 상관관계 (0.4 ≤ |r| < 0.7): <strong>${moderateCorr}개</strong>`;
+            html += '</div>';
+
+            html += '<h3 style="margin-top: 20px;">🔝 주요 상관관계 (상위 10개)</h3>';
+            
+            sortedPairs.slice(0, 10).forEach((pair, index) => {
+                const strength = getCorrelationStrength(pair.correlation);
+                const direction = pair.correlation > 0 ? '📈' : '📉';
+                
+                html += '<div class="interpretation-item">';
+                html += `<strong>${index + 1}. ${pair.col1}</strong> ↔ <strong>${pair.col2}</strong>`;
+                html += `<span class="correlation-badge ${strength.class}">${strength.text}</span>`;
+                html += `<br><span style="color: #666;">상관계수: <strong>${pair.correlation.toFixed(3)}</strong></span>`;
+                html += `<br>${direction} ${getInterpretationText(pair.correlation)}`;
+                html += '</div>';
+            });
+
+            html += '<div class="interpretation-item insight">';
+            html += '<strong>💡 분석 인사이트</strong><br>';
+            html += generateInsights(sortedPairs, avgAbsCorr);
+            html += '</div>';
+
+            document.getElementById('interpretationContent').innerHTML = html;
+        }
+
+        function getInterpretationText(corr) {
+            const absCorr = Math.abs(corr);
+            const direction = corr > 0 ? '양의' : '음의';
+            
+            if (absCorr >= 0.9) {
+                return `매우 강한 ${direction} 선형 관계가 있습니다. 두 변수는 거의 완벽하게 ${corr > 0 ? '같은' : '반대'} 방향으로 움직입니다.`;
+            } else if (absCorr >= 0.7) {
+                return `강한 ${direction} 상관관계입니다. 한 변수가 변할 때 다른 변수도 ${corr > 0 ? '같은' : '반대'} 방향으로 상당히 변합니다.`;
+            } else if (absCorr >= 0.4) {
+                return `보통 수준의 ${direction} 상관관계입니다. 두 변수 사이에 어느 정도 관련성이 있습니다.`;
+            } else if (absCorr >= 0.2) {
+                return `약한 ${direction} 상관관계입니다. 두 변수 사이에 미약한 관련성이 있습니다.`;
+            } else {
+                return `상관관계가 거의 없습니다. 두 변수는 독립적으로 움직입니다.`;
+            }
+        }
+
+        function generateInsights(pairs, avgAbsCorr) {
+            let insights = [];
+            
+            const strongestPositive = pairs.filter(p => p.correlation > 0)
+                                           .sort((a, b) => b.correlation - a.correlation)[0];
+            if (strongestPositive && strongestPositive.correlation >= 0.5) {
+                insights.push(`<strong>${strongestPositive.col1}</strong>과(와) <strong>${strongestPositive.col2}</strong>이(가) 가장 강한 양의 상관관계(${strongestPositive.correlation.toFixed(3)})를 보입니다. 이 두 변수는 함께 증가하는 경향이 있습니다.`);
+            }
+            
+            const strongestNegative = pairs.filter(p => p.correlation < 0)
+                                           .sort((a, b) => a.correlation - b.correlation)[0];
+            if (strongestNegative && strongestNegative.correlation <= -0.5) {
+                insights.push(`<strong>${strongestNegative.col1}</strong>과(와) <strong>${strongestNegative.col2}</strong>이(가) 강한 음의 상관관계(${strongestNegative.correlation.toFixed(3)})를 보입니다. 한 변수가 증가하면 다른 변수는 감소하는 경향이 있습니다.`);
+            }
+            
+            if (avgAbsCorr >= 0.5) {
+                insights.push('전반적으로 변수들 사이에 상당한 상관관계가 존재합니다. 다중공선성 여부를 확인해보세요.');
+            } else if (avgAbsCorr <= 0.2) {
+                insights.push('전반적으로 변수들이 독립적입니다. 각 변수가 서로 다른 정보를 담고 있을 가능성이 높습니다.');
+            }
+            
+            if (insights.length === 0) {
+                insights.push('데이터의 특성을 파악하고 추가 분석을 진행해보세요.');
+            }
+            
+            return insights.join('<br><br>');
+        }
+    </script>
+</body>
+</html>
